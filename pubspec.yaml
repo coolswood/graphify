@@ -34,7 +34,6 @@ flutter:
 # adding or updating assets for this project.
   assets:
     - assets/js/echarts.custom.min.js
-    - assets/js/echarts.min.js
 platforms:
   android:
   ios:
