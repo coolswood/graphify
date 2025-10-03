@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
 import 'dart:ui_web';
 
 import 'package:flutter/cupertino.dart';
@@ -33,11 +31,9 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
   String get uid => controller.uid;
 
   Future<void>? _dependenciesReady;
-  EventListener? _consoleListener;
 
   @override
   void initView() {
-    initConsoleBridge();
     initChartDependencies();
     platformViewRegistry.registerViewFactory(
       uid,
@@ -75,42 +71,6 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
     _dependenciesReady ??= _ensureDependenciesInjected();
   }
 
-  void initConsoleBridge() {
-    if (_consoleListener != null) {
-      return;
-    }
-
-    final listener = EventListener((Event event) {
-      if (event is! MessageEvent) {
-        return;
-      }
-
-      final rawData = event.data;
-      Object? payload;
-
-      if (rawData == null) {
-        return;
-      }
-
-      if (rawData is JSAny) {
-        payload = rawData.dartify();
-      } else {
-        payload = rawData;
-      }
-
-      if (payload is String) {
-        payload = _tryDecodeJson(payload);
-      }
-
-      if (payload is Map && payload['source'] == 'graphify-console') {
-        _dispatchConsole(payload);
-      }
-    });
-
-    window.addEventListener('message', listener);
-    _consoleListener = listener;
-  }
-
   Future<void> _ensureDependenciesInjected() async {
     final document = window.document;
     final dependencyScripts = document.querySelector("#$_chartDependencyId");
@@ -141,24 +101,6 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
     if (widget.controller == null) {
       controller.dispose();
     }
-    final listener = _consoleListener;
-    if (listener != null) {
-      window.removeEventListener('message', listener);
-      _consoleListener = null;
-    }
     super.dispose();
-  }
-
-  void _dispatchConsole(Object message) {
-    widget.onConsoleMessage?.call(message);
-  }
-
-  Object _tryDecodeJson(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      return decoded;
-    } catch (_) {
-      return raw;
-    }
   }
 }

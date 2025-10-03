@@ -1,13 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:graphify/src/controller/implements/mobile.dart';
 import 'package:graphify/src/resources/dependencies.js.dart';
 import 'package:graphify/src/resources/index.html.dart';
 import 'package:graphify/src/view/_interface.dart' as g_view;
 import 'package:webview_flutter/webview_flutter.dart';
-
-const _consoleChannelName = 'GraphifyConsole';
 
 class GraphifyView extends g_view.GraphifyView {
   const GraphifyView({
@@ -33,22 +29,9 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
     controller.connector = webViewController;
 
     webViewController
-      ..addJavaScriptChannel(
-        _consoleChannelName,
-        onMessageReceived: (message) {
-          _dispatchConsole(_parseConsolePayload(message.message));
-        },
-      )
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
-      ..setOnConsoleMessage((consoleMessage) {
-        final level = consoleMessage.level.toString().split('.').last;
-        _dispatchConsole({
-          'source': 'webview',
-          'level': level,
-          'message': consoleMessage.message,
-        });
-      })
+      ..setOnConsoleMessage(widget.onConsoleMessage ?? (_) {})
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) {
@@ -67,22 +50,6 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
         ),
       );
     });
-  }
-
-  void _dispatchConsole(Object message) {
-    final handler = widget.onConsoleMessage;
-    if (handler != null) {
-      handler(message);
-    }
-  }
-
-  Object _parseConsolePayload(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      return decoded;
-    } catch (_) {
-      return raw;
-    }
   }
 
   @override
