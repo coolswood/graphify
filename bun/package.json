@@ -1,0 +1,18 @@
+{
+  "name": "echarts-bun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bunx esbuild src/entry.ts --bundle --minify --format=iife --global-name=echarts --outfile=dist/echarts.custom.min.js",
+    "build:dev": "bunx esbuild src/entry.ts --bundle --format=iife --global-name=echarts --outfile=dist/echarts.custom.js",
+    "size": "node -e \"const fs=require('fs');const p='dist/echarts.custom.min.js';const s=fs.statSync(p).size;console.log(p,'=>',s,'bytes')\""
+  },
+  "dependencies": {
+    "echarts": "^5.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -31,7 +31,9 @@ flutter:
   # The 'ffiPlugin' specifies that native code should be built and bundled.
   # This is required for using `dart:ffi`.
   # All these are used by the tooling to maintain consistency when
-  # adding or updating assets for this project.
+# adding or updating assets for this project.
+  assets:
+    - assets/js/echarts.custom.min.js
 platforms:
   android:
   ios:
