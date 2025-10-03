@@ -2,7 +2,7 @@
 
 import 'package:graphify/src/controller/js_methods.dart';
 
-String indexHtml({ required String id, String? dependencies}) {
+String indexHtml({required String id, String? dependencies}) {
   return '''<!DOCTYPE html>
     <html>
     <head>
@@ -27,10 +27,19 @@ String indexHtml({ required String id, String? dependencies}) {
       <script>
           const dom = document.getElementById('chart');
           const context = (window.parent && window.parent.window) || window || {};
-          const chart = context.echarts.init(dom, 'dark', { renderer: 'canvas', useDirtyRect: false });
-          context.${JsMethods.initChart}('$id', chart, {});
-          context.${JsMethods.updateChart}('$id', {});
-          window.addEventListener('resize', chart.resize);
+          const bootstrap = () => {
+            if (!context.echarts || typeof context.${JsMethods.initChart} !== 'function') {
+              window.requestAnimationFrame(bootstrap);
+              return;
+            }
+
+            const chart = context.echarts.init(dom, 'dark', { renderer: 'canvas', useDirtyRect: false });
+            context.${JsMethods.initChart}('$id', chart, {});
+            context.${JsMethods.updateChart}('$id', {});
+            window.addEventListener('resize', chart.resize);
+          };
+
+          bootstrap();
       </script>
     </body>
     </html>

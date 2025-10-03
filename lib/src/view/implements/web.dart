@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:ui_web';
 
@@ -29,6 +30,8 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
 
   String get uid => controller.uid;
 
+  Future<void>? _dependenciesReady;
+
   @override
   void initView() {
     initChartDependencies();
@@ -51,25 +54,45 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
       ..style.height = '100%'
       ..style.border = 'none'
       ..srcdoc = indexHtml(id: uid).toJS
-      ..onLoad.listen((_) => controller.update(widget.initialOptions))
+      ..onLoad.listen((_) {
+        final ready = _dependenciesReady;
+        if (ready != null) {
+          ready.then((_) => controller.update(widget.initialOptions));
+        } else {
+          controller.update(widget.initialOptions);
+        }
+      })
       ..onError.listen(widget.onConsoleMessage);
 
     return iframe;
   }
 
   void initChartDependencies() {
+    _dependenciesReady ??= _ensureDependenciesInjected();
+  }
+
+  Future<void> _ensureDependenciesInjected() async {
     final document = window.document;
     final dependencyScripts = document.querySelector("#$_chartDependencyId");
 
-    if (dependencyScripts == null) {
+    if (dependencyScripts != null) {
+      return;
+    }
+
+    try {
+      final dependencies = await loadDependencies();
       final scriptElement = HTMLScriptElement()
         ..id = _chartDependencyId
         ..innerHTML = dependencies.toJS;
 
       final dom = window.document;
-      final body = dom.documentElement?.children.item(1);
+      final body = dom.documentElement?.children.item(1) ?? dom.body;
 
       body?.append(scriptElement);
+    } catch (error, stackTrace) {
+      _dependenciesReady = null;
+      Zone.current.handleUncaughtError(error, stackTrace);
+      rethrow;
     }
   }
 
