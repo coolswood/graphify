@@ -1,12 +1,29 @@
-import 'package:graphify/src/resources/lib/echarts.gl.min.dart';
-import 'package:graphify/src/resources/lib/echarts.min.dart';
-import 'package:graphify/src/resources/lib/jquery.min.dart';
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:graphify/src/controller/js_methods.dart';
 
-const dependencies = "$jQuery "
-    "$echartsMin "
-    "$echartsGlMin "
-    "$chartScripts";
+const _echartsAssetPath = 'packages/graphify/assets/js/echarts.custom.min.js';
+
+String? _cachedDependencies;
+Future<String>? _loadingDependencies;
+
+Future<String> loadDependencies() {
+  final cached = _cachedDependencies;
+  if (cached != null) {
+    return Future.value(cached);
+  }
+
+  return _loadingDependencies ??=
+      rootBundle.loadString(_echartsAssetPath).then((echartsSource) {
+    final combined = '$echartsSource $chartScripts';
+    _cachedDependencies = combined;
+    return combined;
+  }).catchError((error, stackTrace) {
+    _loadingDependencies = null;
+    throw error;
+  });
+}
 
 const String chartScripts = """
     
@@ -40,4 +57,3 @@ const String chartScripts = """
     }
     
 """;
-

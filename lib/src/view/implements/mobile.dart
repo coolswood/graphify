@@ -26,16 +26,12 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
 
   @override
   void initView() {
-    controller.connector = webViewController
+    controller.connector = webViewController;
+
+    webViewController
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
       ..setOnConsoleMessage(widget.onConsoleMessage ?? (_) {})
-      ..loadHtmlString(
-        indexHtml(
-          id: controller.uid,
-          dependencies: "<script>$dependencies</script>",
-        ),
-      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) {
@@ -44,6 +40,16 @@ class _GraphifyViewState extends g_view.GraphifyViewState<GraphifyView> {
           },
         ),
       );
+
+    loadDependencies().then((deps) {
+      if (!mounted) return;
+      webViewController.loadHtmlString(
+        indexHtml(
+          id: controller.uid,
+          dependencies: '<script>$deps</script>',
+        ),
+      );
+    });
   }
 
   @override
